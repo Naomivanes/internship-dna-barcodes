@@ -484,5 +484,26 @@ from ete3 import Tree
 # print(tree)
 # end = time.time()
 # print(end - start)
-tree_nsr = pd.read_csv(PATH + "/insert_files/tree_nsr.csv")
-df = tree_nsr.drop(columns=['species_id', 'tax_id', 'identification_reference'])
+
+
+
+
+# NSR TAXON
+def nsr_taxon_node():
+    tree_nsr = pd.read_csv(PATH + "/insert_files/tree_nsr.csv")
+    nsr_taxon = tree_nsr.rename(columns={"tax_id": "taxon_id", "species":
+        "name", 'kingdom': "authority"})[['taxon_id',"name", "authority"]]
+    print(nsr_taxon) # VOOR ELKE RANK, WAT DOEN ALS TAXON ID BIJ NSR??
+    print("MOET NOG VOOR ELKE RANK, WAT DOEN ALS TAXON ID BIJ NSR??")
+    # Make nsr_node table:
+    # Newick tree made with taxon_id as name
+    # megatree-loader -i infile.tre -d outfile2.db in ubuntu
+
+def ncbi_taxon_node():
+    tree_ncbi = pd.read_csv(PATH + "/insert_files/tree_ncbi.csv")
+
+    print(tree_ncbi[tree_ncbi['rank'] == 'species']['name'].value_counts())
+    print("KLOPT NIET")
+
+nsr_taxon_node()
+ncbi_taxon_node()
