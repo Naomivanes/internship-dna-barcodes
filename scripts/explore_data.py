@@ -495,15 +495,109 @@ def nsr_taxon_node():
         "name", 'kingdom': "authority"})[['taxon_id',"name", "authority"]]
     print(nsr_taxon) # VOOR ELKE RANK, WAT DOEN ALS TAXON ID BIJ NSR??
     print("MOET NOG VOOR ELKE RANK, WAT DOEN ALS TAXON ID BIJ NSR??")
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_columns', None)
+
+    tree_nsr.drop(tree_nsr.columns[[0, 1, 9]], axis = 1, inplace = True)
+    tree_nsr = tree_nsr.drop_duplicates()
+    tree_nsr = tree_nsr.drop([24194])
+    print(tree_nsr)
+    tree_nsr = tree_nsr.drop(tree_nsr[tree_nsr.order.str.contains(r'[\[]') == True].index)
+
+
+
+
+    return tree_nsr.values.tolist()
+    #print(tree_nsr.values().tolist())
+
     # Make nsr_node table:
     # Newick tree made with taxon_id as name
     # megatree-loader -i infile.tre -d outfile2.db in ubuntu
+    # https://github.com/rvosa/bio-phylo-forest-dbtree/blob/master/README.md
 
 def ncbi_taxon_node():
-    tree_ncbi = pd.read_csv(PATH + "/insert_files/tree_ncbi.csv")
 
-    print(tree_ncbi[tree_ncbi['rank'] == 'species']['name'].value_counts())
-    print("KLOPT NIET")
+    ncbi = NCBITaxa()
+    #ncbi.update_taxonomy_database()
+    species_df = pd.read_csv(PATH + "/exports/nsr_export_synoynyms.csv")
+    species_list = species_df['taxon_name'].tolist()
+    # Get tax id for every species name
 
-nsr_taxon_node()
-ncbi_taxon_node()
+    name2taxid = ncbi.get_name_translator(species_list)
+    print(name2taxid)
+    print(len(species_list))
+    print(len(name2taxid))
+    wel = name2taxid.keys()
+    species_list = species_df[~species_df['taxon_name'].isin(wel)]["synonym_name"].tolist()
+    name2taxid.update(ncbi.get_name_translator(species_list))
+    print(len(name2taxid))
+    print(species_df[~species_df['taxon_name'].isin(wel)]["taxon_name"].tolist())
+
+import csv
+from collections import defaultdict
+from pprint import pprint
+# BEGRIJPEN/ DOCUMENTEREN
+def tree():
+    return defaultdict(tree)
+
+def tree_add(t, path):
+    for node in path:
+        t = t[node]
+
+def pprint_tree(tree_instance):
+    def dicts(t): return {k: dicts(t[k]) for k in t}
+
+    pprint(dicts(tree_instance))
+
+def csv_to_tree(input):
+    t = tree()
+    for row in csv.reader(input, quotechar='\''):
+        tree_add(t, row)
+    return t
+
+def tree_to_newick(root):
+    items = []
+    for k in root.keys():
+        s = ''
+        if len(root[k].keys()) > 0:
+            sub_tree = tree_to_newick(root[k])
+            if sub_tree != '':
+                s += '(' + sub_tree + ')'
+        s += k
+        items.append(s)
+    return ','.join(items)
+
+def csv_to_weightless_newick(input):
+    t = csv_to_tree(input)
+    # pprint_tree(t)
+    return tree_to_newick(t)
+    # see https://docs.python.org/2/library/csv.html to read CSV file
+input = [
+            "'Phylum','Class','Order','Family','Genus','Species','Subspecies','unique_gi'",
+            "'Phylum','Class','Order','example'",
+            "'Another','Test'",
+        ]
+
+#print(csv_to_weightless_newick(input))
+
+
+
+
+backbone = nsr_taxon_node()
+#ncbi_taxon_node()
+#print(backbone)
+df = pd.DataFrame(backbone)
+df.to_csv('nsr_tree.csv', header=False, index=False)
+file = open('nsr_tree.csv', 'r')
+lijst = []
+newick_nsr = csv_to_weightless_newick(file)
+with open("nsr_tree.csv", 'r') as f2:
+    for i in f2:
+
+        lijst.append(i.strip().replace(',', ', '))
+
+print(lijst)
+file.close()
+#print(df.to_string(header=False, index=False))
+newick_nsr = csv_to_weightless_newick(lijst)
+print(newick_nsr)
